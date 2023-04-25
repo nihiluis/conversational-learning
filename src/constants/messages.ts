@@ -1,0 +1,1 @@
+export const WELCOME_MESSAGE = "I'm your helper to learn python for the next few minutes."
