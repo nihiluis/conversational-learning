@@ -7,6 +7,10 @@ import {
   ChatCompletionRequestMessage,
 } from "openai"
 import { OPENAI_MODEL_NAME } from "./params"
+import { BASE_PROMPT } from "./prompts"
+import { ChatMessage } from "~/state"
+
+const openaiWrapper = getOpenAIWrapper()
 
 export function getOpenAIConfig() {
   return new Configuration({
@@ -24,24 +28,25 @@ export function createQueryMessage(
   return { role, content: text }
 }
 
-export async function queryContext(
-  openaiWrapper: OpenAIApi,
-  messages: ChatCompletionRequestMessage[]
-): Promise<string> {
-  const [res, err] = await protect(openaiWrapper.createChatCompletion({
+export async function queryTutor(messages: ChatMessage[]): Promise<string> {
+  const filteredMessages = messages
+    .filter(msg => msg.addToPrompt)
+    .map(msg => createQueryMessage(msg.role, msg.text))
+
+  const wrappedMessages = [
+    createQueryMessage("system", BASE_PROMPT),
+    ...filteredMessages,
+  ]
+
+  const res = await openaiWrapper.createChatCompletion({
     model: OPENAI_MODEL_NAME,
-    messages,
+    messages: wrappedMessages,
     temperature: 0,
     max_tokens: 1024,
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
-  }))
-
-  if (err || !res!.data) {
-    console.error(err?.message)
-    return ""
-  }
+  })
 
   const answer = res!.data.choices[0]?.message
   if (!answer) {

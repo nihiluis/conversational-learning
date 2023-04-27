@@ -5,11 +5,7 @@ import Chat from "~/components/chat"
 import PageWrapper from "~/components/PageWrapper"
 import { SITE_DESCRIPTION, SITE_NAME } from "~/constants/env"
 
-import { api } from "~/utils/api"
-
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC" })
-
   return (
     <>
       <Head>
@@ -29,9 +25,6 @@ const Home: NextPage = () => {
             allowFullScreen></iframe> */}
           <div className="flex-grow">
             <Chat />
-            <p className="text-2xl text-white">
-              {hello.data ? hello.data.greeting : "Loading tRPC query..."}
-            </p>
           </div>
         </div>
       </PageWrapper>
