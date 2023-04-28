@@ -1,16 +1,24 @@
-import { ChatMessage } from "~/state"
-import { FiUser, FiMonitor } from "react-icons/fi"
+import { ChatMessage, debugState } from "~/state"
+import { FiUser, FiMonitor, FiRepeat } from "react-icons/fi"
 import classNames from "classnames"
 import { PropsWithChildren, useEffect, useState } from "react"
 import { MessageComponent, getMessageComponents } from "~/lib/message"
+import { useRecoilState } from "recoil"
 
 interface Props {
   message: ChatMessage
+  isLastMessage: boolean
+  retryLastMessage: () => void
 }
 
-export default function ChatMessage({ message }: Props) {
+export default function ChatMessageContainer({
+  message,
+  isLastMessage,
+  retryLastMessage,
+}: Props) {
   const isSystem = message.role === "system" || message.role === "assistant"
 
+  const [debug] = useRecoilState(debugState)
   const [messageComponents, setMessageComponents] = useState<
     MessageComponent[]
   >([])
@@ -37,17 +45,27 @@ export default function ChatMessage({ message }: Props) {
         <div className="flex w-[calc(100%-50px)] flex-grow gap-1 text-gray-700 md:gap-3 lg:w-[calc(100%-115px)]">
           {isSystem && <ChatAssistantAvatar />}
           {!isSystem && <ChatUserAvatar />}
-          <div className="flex flex-col gap-2">
-            {messageComponents.map((msg, idx) => (
-              <div key={`msgcomponent-${idx}`}>
-                {msg.type === "text" && (
-                  <ChatTextComponent>{msg.text}</ChatTextComponent>
-                )}
-                {msg.type === "terminal" && (
-                  <ChatTerminalComponent>{msg.text}</ChatTerminalComponent>
-                )}
+          <div className="flex gap-4">
+            <div className="flex flex-col items-start gap-2">
+              {message.error.length > 0 &&
+                (debug ? message.error : message.text)}
+              {message.error.length === 0 &&
+                messageComponents.map((msg, idx) => (
+                  <div key={`msgcomponent-${idx}`}>
+                    {msg.type === "text" && (
+                      <ChatTextComponent>{msg.text}</ChatTextComponent>
+                    )}
+                    {msg.type === "terminal" && (
+                      <ChatTerminalComponent>{msg.text}</ChatTerminalComponent>
+                    )}
+                  </div>
+                ))}
+            </div>
+            {isLastMessage && message.error.length > 0 && (
+              <div className="cursor-pointer self-start rounded-full bg-red-400 p-1 text-white hover:bg-red-600">
+                <FiRepeat onClick={retryLastMessage} />
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -61,7 +79,11 @@ function ChatTextComponent({ children }: TextProps) {
   return <p>{children}</p>
 }
 function ChatTerminalComponent({ children }: TextProps) {
-  return <code className="bg-gray-900 p-4 text-gray-50 rounded flex whitespace-pre-wrap">{children}</code>
+  return (
+    <code className="flex whitespace-pre-wrap rounded bg-gray-900 p-4 text-gray-50">
+      {children}
+    </code>
+  )
 }
 
 function ChatAssistantAvatar() {

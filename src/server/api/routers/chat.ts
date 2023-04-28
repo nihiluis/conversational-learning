@@ -10,25 +10,30 @@ export const chatRouter = createTRPCRouter({
   queryTutor: publicProcedure
     .input(
       z.object({
+        phase: z.enum(["active", "constructive", "interactive"]),
         messages: z.array(
           z.object({
             id: z.string(),
             text: z.string(),
             role: z.enum(["user", "system", "assistant"]),
             addToPrompt: z.boolean(),
+            showInUi: z.boolean(),
+            error: z.string(),
           })
         ),
       })
     )
     .query(async ({ input }): Promise<ChatMessage> => {
-      const [answer, err] = await protect(queryTutor(input.messages))
+      const [answer, err] = await protect(queryTutor(input.phase, input.messages))
 
       if (err || !answer) {
         return {
           id: uuidv4(),
-          text: "Unable to contact the Chat API. Try again at a later point.",
+          text: "Unable to contact the Chat API. Maybe you are going too fast? You can only send three requests per minute. Try again later.",
+          error: err?.message ?? "",
           addToPrompt: false,
           role: "assistant",
+          showInUi: true,
         }
       }
 
@@ -36,7 +41,9 @@ export const chatRouter = createTRPCRouter({
         id: uuidv4(),
         text: answer,
         role: "assistant",
+        error: "",
         addToPrompt: true,
+        showInUi: true,
       }
     }),
 })

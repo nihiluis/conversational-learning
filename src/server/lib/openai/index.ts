@@ -7,8 +7,8 @@ import {
   ChatCompletionRequestMessage,
 } from "openai"
 import { OPENAI_MODEL_NAME } from "./params"
-import { BASE_PROMPT } from "./prompts"
-import { ChatMessage } from "~/state"
+import { BASE_PROMPT, CONSTRUCTIVE_PROMPT } from "./prompts"
+import { ChatMessage, ChatPhase } from "~/state"
 
 const openaiWrapper = getOpenAIWrapper()
 
@@ -28,13 +28,26 @@ export function createQueryMessage(
   return { role, content: text }
 }
 
-export async function queryTutor(messages: ChatMessage[]): Promise<string> {
+function getBasePrompt(phase: ChatPhase): string {
+  switch (phase) {
+    case "active":
+      return BASE_PROMPT
+    case "constructive":
+      return CONSTRUCTIVE_PROMPT
+    case "interactive":
+      return BASE_PROMPT
+  }
+}
+
+export async function queryTutor(phase: ChatPhase, messages: ChatMessage[]): Promise<string> {
   const filteredMessages = messages
     .filter(msg => msg.addToPrompt)
     .map(msg => createQueryMessage(msg.role, msg.text))
 
+  const basePrompt = getBasePrompt(phase)
+
   const wrappedMessages = [
-    createQueryMessage("system", BASE_PROMPT),
+    createQueryMessage("system", basePrompt),
     ...filteredMessages,
   ]
 
