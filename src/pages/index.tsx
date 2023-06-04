@@ -7,11 +7,16 @@ import Chat from "~/components/chat"
 import HelpText from "~/components/HelpText"
 import PageWrapper from "~/components/PageWrapper"
 import ProcessSteps from "~/components/ProcessSteps"
+import {
+  PHASE_ACTIVE,
+  PHASE_CONSTRUCTIVE,
+  PHASE_INTERACTIVE,
+} from "~/constants/chat"
 import { CHATBOT_NAME, SITE_DESCRIPTION, SITE_NAME } from "~/constants/env"
 import { ChatMessage, chatMessagesState, ChatPhase } from "~/state"
 
 const Home: NextPage = () => {
-  const [chatPhase, setChatPhase] = useState<ChatPhase>("active")
+  const [currentPhase, setCurrentPhase] = useState<ChatPhase>("active")
   const [chatMessages, setChatMessages] = useRecoilState(chatMessagesState)
 
   function setChatMessagesWrapper(phase: ChatPhase, messages: ChatMessage[]) {
@@ -38,26 +43,29 @@ const Home: NextPage = () => {
             allowFullScreen></iframe> */}
           <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
             <HelpText />
-            <ProcessSteps phase={chatPhase} setPhase={setChatPhase} />
+            <ProcessSteps phase={currentPhase} setPhase={setCurrentPhase} />
             <div className="flex-grow">
-              {chatPhase === "active" && (
+              {currentPhase === PHASE_ACTIVE && (
                 <Chat
-                  phase="active"
-                  messages={chatMessages["active"]}
+                  currentPhase={currentPhase}
+                  phase={PHASE_ACTIVE}
+                  messages={chatMessages[PHASE_ACTIVE]}
                   setMessages={setChatMessagesWrapper}
                 />
               )}
-              {chatPhase === "constructive" && (
+              {currentPhase === PHASE_CONSTRUCTIVE && (
                 <Chat
-                  phase="constructive"
-                  messages={chatMessages["constructive"]}
+                  currentPhase={currentPhase}
+                  phase={PHASE_CONSTRUCTIVE}
+                  messages={chatMessages[PHASE_CONSTRUCTIVE]}
                   setMessages={setChatMessagesWrapper}
                 />
               )}
-              {chatPhase === "interactive" && (
+              {currentPhase === PHASE_INTERACTIVE && (
                 <Chat
-                  phase="interactive"
-                  messages={chatMessages["interactive"]}
+                  currentPhase={currentPhase}
+                  phase={PHASE_INTERACTIVE}
+                  messages={chatMessages[PHASE_INTERACTIVE]}
                   setMessages={setChatMessagesWrapper}
                 />
               )}

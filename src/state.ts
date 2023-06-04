@@ -4,6 +4,7 @@ import {
   WELCOME_MESSAGE_CONSTRUCTIVE,
   WELCOME_MESSAGE_INTERACTIVE,
 } from "./constants/messages"
+import { isDevelopmentMode } from "./constants/env"
 
 export interface ChatMessage {
   id: string
@@ -17,7 +18,10 @@ export interface ChatMessage {
 
 export type ChatPhase = "active" | "constructive" | "interactive"
 
-export const debugState = atom<boolean>({ key: "debug", default: true })
+export const debugState = atom<boolean>({
+  key: "debug",
+  default: isDevelopmentMode(),
+})
 
 export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
   key: "chatMessages",

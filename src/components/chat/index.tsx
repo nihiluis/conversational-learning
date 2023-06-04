@@ -5,17 +5,29 @@ import { FiLoader, FiSend } from "react-icons/fi"
 import { useCallback, useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { api } from "~/utils/api"
-import { CONSTRUCTIVE_GENERATE_QUESTION_PROMPT } from "~/constants/prompts"
+import {
+  CONSTRUCTIVE_GENERATE_QUESTION_PROMPT,
+  INTERACTIVE_GENERATE_TASK_PROMPT,
+} from "~/constants/prompts"
+import { queryTutor } from "~/server/lib/openai"
+import { PHASE_CONSTRUCTIVE, PHASE_INTERACTIVE } from "~/constants/chat"
 
 interface Props {
+  currentPhase: ChatPhase
   phase: ChatPhase
   messages: ChatMessage[]
   setMessages: (phase: ChatPhase, messages: ChatMessage[]) => void
 }
 
-export default function Chat({ phase, messages, setMessages }: Props) {
+export default function Chat({
+  phase,
+  currentPhase,
+  messages,
+  setMessages,
+}: Props) {
   const [textareaText, setTextareaText] = useState("")
   const [chatLoading, setChatLoading] = useState(false)
+  const [initializeRunTried, setInitializeRunTried] = useState(false)
   const ctx = api.useContext()
 
   const fetchMessages = useCallback(
@@ -65,12 +77,26 @@ export default function Chat({ phase, messages, setMessages }: Props) {
     fetchMessages,
   ])
 
-  useEffect(() => {
-    const promptMessages = messages.filter(msg => msg.addToPrompt)
-    if (phase === "constructive" && promptMessages.length === 0) {
-      requestQuestion(false)
-    }
-  }, [])
+  const generateInteractiveTask = useCallback(
+    async (showInUi: boolean) => {
+      if (chatLoading) return
+
+      const currentMessages = [...messages]
+      currentMessages.push({
+        id: uuidv4(),
+        role: "assistant",
+        text: INTERACTIVE_GENERATE_TASK_PROMPT,
+        addToPrompt: true,
+        showInUi,
+        error: "",
+      })
+
+      setMessages(phase, currentMessages)
+
+      await fetchMessages(currentMessages)
+    },
+    [messages, setMessages, chatLoading, setChatLoading, fetchMessages]
+  )
 
   const requestQuestion = useCallback(
     async (showInUi: boolean) => {
@@ -107,6 +133,38 @@ export default function Chat({ phase, messages, setMessages }: Props) {
     await fetchMessages(retryMessages)
   }, [messages, phase, setChatLoading, fetchMessages])
 
+  useEffect(() => {
+    if (initializeRunTried) {
+      return
+    }
+
+    if (phase !== currentPhase) {
+      return
+    }
+
+    const promptMessages = messages.filter(msg => msg.addToPrompt)
+    if (phase === PHASE_CONSTRUCTIVE && promptMessages.length === 0) {
+      requestQuestion(false)
+      setInitializeRunTried(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (initializeRunTried) {
+      return
+    }
+
+    if (phase !== currentPhase) {
+      return
+    }
+
+    const promptMessages = messages.filter(msg => msg.addToPrompt)
+    if (phase === PHASE_INTERACTIVE && promptMessages.length === 0) {
+      generateInteractiveTask(false)
+      setInitializeRunTried(true)
+    }
+  }, [])
+
   const filteredMessages = messages.filter(msg => msg.showInUi)
 
   return (
@@ -139,14 +197,14 @@ export default function Chat({ phase, messages, setMessages }: Props) {
           </div>
         </div>
         <div className="absolute right-0 flex">
-          {phase === "constructive" && (
+          {phase === PHASE_CONSTRUCTIVE && (
             <button
               className="rounded bg-green-300 p-2 drop-shadow-sm hover:bg-green-400"
               onClick={() => requestQuestion(false)}>
               Next question
             </button>
           )}
-          {phase === "interactive" && (
+          {phase === PHASE_INTERACTIVE && (
             <button className="rounded bg-green-300 p-2 drop-shadow-sm hover:bg-green-400">
               Help me
             </button>

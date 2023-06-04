@@ -1,5 +1,3 @@
-import protect from "await-protect"
-import axios from "axios"
 import {
   Configuration,
   OpenAIApi,
@@ -7,8 +5,17 @@ import {
   ChatCompletionRequestMessage,
 } from "openai"
 import { OPENAI_MODEL_NAME } from "./params"
-import { BASE_PROMPT, CONSTRUCTIVE_PROMPT } from "./prompts"
+import {
+  BASE_ACTIVE_PROMPT,
+  BASE_CONSTRUCTIVE_PROMPT,
+  BASE_INTERACTIVE_PROMPT,
+} from "~/constants/prompts"
 import { ChatMessage, ChatPhase } from "~/state"
+import {
+  PHASE_ACTIVE,
+  PHASE_CONSTRUCTIVE,
+  PHASE_INTERACTIVE,
+} from "~/constants/chat"
 
 const openaiWrapper = getOpenAIWrapper()
 
@@ -30,16 +37,19 @@ export function createQueryMessage(
 
 function getBasePrompt(phase: ChatPhase): string {
   switch (phase) {
-    case "active":
-      return BASE_PROMPT
-    case "constructive":
-      return CONSTRUCTIVE_PROMPT
-    case "interactive":
-      return BASE_PROMPT
+    case PHASE_ACTIVE:
+      return BASE_ACTIVE_PROMPT
+    case PHASE_CONSTRUCTIVE:
+      return BASE_CONSTRUCTIVE_PROMPT
+    case PHASE_INTERACTIVE:
+      return BASE_INTERACTIVE_PROMPT
   }
 }
 
-export async function queryTutor(phase: ChatPhase, messages: ChatMessage[]): Promise<string> {
+export async function queryTutor(
+  phase: ChatPhase,
+  messages: ChatMessage[]
+): Promise<string> {
   const filteredMessages = messages
     .filter(msg => msg.addToPrompt)
     .map(msg => createQueryMessage(msg.role, msg.text))
