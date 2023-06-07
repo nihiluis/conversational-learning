@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useRecoilState } from "recoil"
 import Chat from "~/components/chat"
 import HelpText from "~/components/HelpText"
+import Onboarding from "~/components/Onboarding"
 import PageWrapper from "~/components/PageWrapper"
 import ProcessSteps from "~/components/ProcessSteps"
 import {
@@ -12,7 +13,12 @@ import {
   PHASE_CONSTRUCTIVE,
   PHASE_INTERACTIVE,
 } from "~/constants/chat"
-import { CHATBOT_NAME, SITE_DESCRIPTION, SITE_NAME } from "~/constants/env"
+import {
+  CHATBOT_NAME,
+  isDevelopmentMode,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+} from "~/constants/env"
 import { ChatMessage, chatMessagesState, ChatPhase } from "~/state"
 
 const Home: NextPage = () => {
@@ -42,7 +48,8 @@ const Home: NextPage = () => {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen></iframe> */}
           <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
-            <HelpText />
+            {!isDevelopmentMode() && <HelpText />}
+            <Onboarding />
             <ProcessSteps phase={currentPhase} setPhase={setCurrentPhase} />
             <div className="flex-grow">
               {currentPhase === PHASE_ACTIVE && (

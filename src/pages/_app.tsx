@@ -1,16 +1,21 @@
-import { type AppType } from "next/app"
+import { AppProps, type AppType } from "next/app"
 
 import { api } from "~/utils/api"
 
 import "~/styles/globals.css"
+import { SessionProvider } from "next-auth/react"
+import { Session } from "next-auth"
 import { RecoilRoot } from "recoil"
 
-const MyApp: AppType = ({ Component, pageProps }) => {
+export default function App({
+  Component,
+  pageProps: { session, ...pageProps },
+}: AppProps<{ session: Session }>) {
   return (
-    <RecoilRoot>
-      <Component {...pageProps} />
-    </RecoilRoot>
+    <SessionProvider session={session}>
+      <RecoilRoot>
+        <Component {...pageProps} />
+      </RecoilRoot>
+    </SessionProvider>
   )
 }
-
-export default api.withTRPC(MyApp)
