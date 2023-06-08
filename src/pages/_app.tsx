@@ -7,7 +7,7 @@ import { SessionProvider } from "next-auth/react"
 import { Session } from "next-auth"
 import { RecoilRoot } from "recoil"
 
-export default function App({
+function App({
   Component,
   pageProps: { session, ...pageProps },
 }: AppProps<{ session: Session }>) {
@@ -19,3 +19,6 @@ export default function App({
     </SessionProvider>
   )
 }
+
+
+export default api.withTRPC(App)

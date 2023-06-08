@@ -3,6 +3,7 @@ import Head from "next/head"
 import Link from "next/link"
 import { useState } from "react"
 import { useRecoilState } from "recoil"
+import AuthBar from "~/components/AuthBar"
 import Chat from "~/components/chat"
 import HelpText from "~/components/HelpText"
 import Onboarding from "~/components/Onboarding"
@@ -38,6 +39,9 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PageWrapper>
+        <div className="">
+            <AuthBar />
+        </div>
         <div className="flex gap-8 p-8">
           {/* <iframe
             width="560"
