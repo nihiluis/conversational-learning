@@ -30,7 +30,7 @@ type CreateContextOptions = Record<string, never>
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
 const createInnerTRPCContext = (_opts: CreateContextOptions) => {
-  const prisma = new PrismaClient({})
+  const prisma = prismaClient
   const logger = pino({ level: isDevelopmentMode() ? "debug" : "info" })
 
   return { prisma, logger }
@@ -59,6 +59,7 @@ import { ZodError } from "zod"
 import { PrismaClient } from "@prisma/client"
 import { pino } from "pino"
 import { isDevelopmentMode } from "~/constants/env"
+import { prismaClient } from "../db"
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,

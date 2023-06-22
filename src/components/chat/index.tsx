@@ -187,7 +187,7 @@ export default function Chat({
             placeholder="Send a message."
             value={textareaText}
             onChange={event => setTextareaText(event.target.value)}
-            className="textarea-bordered textarea flex-grow"
+            className="textarea flex-grow"
           />
           <div
             className="absolute bottom-0 right-0 text-gray-600"

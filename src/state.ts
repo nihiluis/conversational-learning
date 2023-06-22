@@ -5,6 +5,7 @@ import {
   WELCOME_MESSAGE_INTERACTIVE,
 } from "./constants/messages"
 import { isDevelopmentMode } from "./constants/env"
+import { EduLecture } from "@prisma/client"
 
 export interface ChatMessage {
   id: string
@@ -21,6 +22,11 @@ export type ChatPhase = "active" | "constructive" | "interactive"
 export const debugState = atom<boolean>({
   key: "debug",
   default: isDevelopmentMode(),
+})
+
+export const lectureState = atom<EduLecture | null>({
+  key: "lecture",
+  default: null,
 })
 
 export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
