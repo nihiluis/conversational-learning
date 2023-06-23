@@ -5,7 +5,8 @@ import {
   WELCOME_MESSAGE_INTERACTIVE,
 } from "./constants/messages"
 import { isDevelopmentMode } from "./constants/env"
-import { EduLecture } from "@prisma/client"
+import { EduCourse, EduLecture } from "@prisma/client"
+import { CourseWithLectures } from "./server/api/routers/onboarding"
 
 export interface ChatMessage {
   id: string
@@ -26,6 +27,11 @@ export const debugState = atom<boolean>({
 
 export const lectureState = atom<EduLecture | null>({
   key: "lecture",
+  default: null,
+})
+
+export const courseState = atom<CourseWithLectures | null>({
+  key: "course",
   default: null,
 })
 

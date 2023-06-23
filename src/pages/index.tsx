@@ -22,7 +22,6 @@ import {
   SITE_NAME,
 } from "~/constants/env"
 import { ChatMessage, chatMessagesState, ChatPhase } from "~/state"
-import { Disclosure, Transition } from "@headlessui/react"
 import Sidebar from "~/components/sidebar/Sidebar"
 
 const Home: NextPage = () => {
@@ -45,7 +44,7 @@ const Home: NextPage = () => {
         {/* <div className="">
           <AuthBar />
         </div> */}
-        <div className="flex h-full relative">
+        <div className="relative flex h-full">
           <Sidebar className="h-full w-[260px]" />
           <div className="h-full flex-grow">
             {/* <iframe
@@ -56,39 +55,7 @@ const Home: NextPage = () => {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen></iframe> */}
-            <Disclosure defaultOpen>
-              {({ open }) => (
-                <>
-                  <Transition
-                    enter="transition duration-100 ease-out"
-                    enterFrom="transform scale-95 opacity-0"
-                    enterTo="transform scale-100 opacity-100"
-                    leave="transition duration-75 ease-out"
-                    leaveFrom="transform scale-100 opacity-100"
-                    leaveTo="transform scale-95 opacity-0">
-                    <Disclosure.Panel>
-                      <div className="bg-blue-50 p-6">
-                        <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
-                          <div className="flex flex-col items-center justify-center">
-                            <Onboarding />
-                            {/* <div className="divider my-2 !bg-gray-50"></div> */}
-                          </div>
-                        </div>
-                      </div>
-                    </Disclosure.Panel>
-                  </Transition>
-                  <div className="mb-4 flex flex-col items-center justify-center">
-                    <Disclosure.Button>
-                      <div className="flex flex-col items-center justify-center">
-                        <HiChevronDown size={24} className="cursor-pointer" />
-                        {open && <p className="text-xs">Hide onboarding</p>}
-                        {!open && <p className="text-xs">Show onboarding</p>}
-                      </div>
-                    </Disclosure.Button>
-                  </div>
-                </>
-              )}
-            </Disclosure>
+            <Onboarding />
             <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
               {!isDevelopmentMode() && <HelpText />}
               <ProcessSteps phase={currentPhase} setPhase={setCurrentPhase} />

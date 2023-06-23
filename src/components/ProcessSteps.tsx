@@ -11,24 +11,35 @@ export default function ProcessSteps({ phase, setPhase }: Props) {
   const isConstructivePhase = phase === "constructive"
   const isInteractivePhase = phase === "interactive"
 
+  function setPhaseWrapper(phase: ChatPhase) {
+    return function () {
+      setPhase(phase)
+    }
+  }
+
   return (
     <ul className="steps">
       <Step
         label="Learn"
         active={isActivePhase || isConstructivePhase || isInteractivePhase}
-        setActive={() => setPhase("active")}
+        setActive={setPhaseWrapper("active")}
+        unlocked
       />
       <Step
         label="Test"
         active={isConstructivePhase || isInteractivePhase}
-        setActive={() => setPhase("constructive")}
+        setActive={setPhaseWrapper("constructive")}
+        unlocked={false}
       />
       <Step
         label="Apply"
         active={isInteractivePhase}
-        setActive={() =>
-          setPhase(isConstructivePhase || isInteractivePhase ? "interactive" : "constructive")
-        }
+        setActive={setPhaseWrapper(
+          isConstructivePhase || isInteractivePhase
+            ? "interactive"
+            : "constructive"
+        )}
+        unlocked={false}
       />
     </ul>
   )
@@ -38,16 +49,20 @@ interface StepProps {
   active: boolean
   label: string
   setActive: () => void
+  unlocked: boolean
 }
-function Step({ active, setActive, label }: StepProps) {
-  const classes = classNames("step cursor-pointer", {
+function Step({ active, setActive, label, unlocked }: StepProps) {
+  const classes = classNames("step", {
     "before:!bg-green-300 after:!bg-green-300": active,
     "before:!bg-white after:!bg-white": !active,
+    "cursor-pointer": unlocked,
   })
 
   return (
     <li className={classes} onClick={setActive}>
-      {label}
+      <span className={classNames({ "text-gray-400": !unlocked })}>
+        {label}
+      </span>
     </li>
   )
 }

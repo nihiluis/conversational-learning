@@ -26,26 +26,30 @@ export default function Chat({
   setMessages,
 }: Props) {
   const [textareaText, setTextareaText] = useState("")
-  const [chatLoading, setChatLoading] = useState(false)
   const [initializeRunTried, setInitializeRunTried] = useState(false)
-  const ctx = api.useContext()
+
+  const resolveAnswerMutation = api.chat.resolveAnswer.useMutation()
+  const resolveLocalAnswerMutation = api.chat.resolveLocalAnswer.useMutation()
+
+  const chatLoading =
+    resolveAnswerMutation.isLoading || resolveLocalAnswerMutation.isLoading
 
   const fetchMessages = useCallback(
     async (messages: ChatMessage[]) => {
-      setChatLoading(true)
-
-      const answerMessage = await ctx.chat.queryTutor.fetch({
-        phase,
-        messages,
-      })
-      const messagesWithAnswer = [...messages, answerMessage]
-
-      setMessages(phase, messagesWithAnswer)
-
-      setChatLoading(false)
+      resolveAnswerMutation.mutate({ phase, messages })
     },
-    [phase, setChatLoading, setMessages]
+    [resolveAnswerMutation, phase]
   )
+
+  useEffect(() => {
+    const answerMessage = resolveAnswerMutation.data
+    if (!answerMessage) {
+      return
+    }
+
+    const messagesWithAnswer = [...messages, answerMessage]
+    setMessages(phase, messagesWithAnswer)
+  }, [resolveAnswerMutation.data])
 
   const sendUserMessage = useCallback(async () => {
     if (textareaText === "") return
@@ -72,8 +76,6 @@ export default function Chat({
     setMessages,
     textareaText,
     setTextareaText,
-    chatLoading,
-    setChatLoading,
     fetchMessages,
   ])
 
@@ -95,7 +97,7 @@ export default function Chat({
 
       await fetchMessages(currentMessages)
     },
-    [messages, setMessages, chatLoading, setChatLoading, fetchMessages]
+    [messages, setMessages, fetchMessages]
   )
 
   const requestQuestion = useCallback(
@@ -116,7 +118,7 @@ export default function Chat({
 
       await fetchMessages(currentMessages)
     },
-    [messages, setMessages, chatLoading, setChatLoading, fetchMessages]
+    [messages, setMessages, chatLoading, fetchMessages]
   )
 
   const retryLastMessage = useCallback(async () => {
@@ -131,7 +133,7 @@ export default function Chat({
     setMessages(phase, retryMessages)
 
     await fetchMessages(retryMessages)
-  }, [messages, phase, setChatLoading, fetchMessages])
+  }, [messages, phase, fetchMessages])
 
   useEffect(() => {
     if (initializeRunTried) {

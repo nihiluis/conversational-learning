@@ -1,6 +1,12 @@
 import { signIn, signOut, useSession } from "next-auth/react"
 import Button from "../ui/Button"
 import classNames from "classnames"
+import TextButton from "../ui/TextButton"
+import {
+  HiAcademicCap,
+  HiCog6Tooth,
+  HiQuestionMarkCircle,
+} from "react-icons/hi2"
 
 interface Props {
   className?: string
@@ -10,9 +16,39 @@ export default function Sidebar({ className }: Props) {
   const { data: session } = useSession()
 
   return (
-    <div className={classNames("bg-blue-900 p-4", className)}>
-      {!session && <Button onClick={() => signIn()}>Sign in</Button>}
-      {session && <Button onClick={() => signOut()}>Sign out</Button>}
+    <div
+      className={classNames(
+        "flex flex-col bg-blue-900 p-4 text-white",
+        className
+      )}>
+      <div className="flex flex-col">
+        <TextButton>
+          <HiAcademicCap size={20} />
+          <span>New chat</span>
+        </TextButton>
+      </div>
+      <div className="divider my-2" />
+      <div className="flex flex-col">
+        <TextButton>
+          <HiQuestionMarkCircle size={20} />
+          <span>FAQ</span>
+        </TextButton>
+        <TextButton>
+          <HiCog6Tooth size={20} />
+          <span>Settings</span>
+        </TextButton>
+      </div>
+      <div className="divider my-2" />
+      <div className="flex flex-grow items-end justify-end">
+        <div>
+          {!session && (
+            <TextButton onClick={() => signIn()}>Sign in</TextButton>
+          )}
+          {session && (
+            <TextButton onClick={() => signOut()}>Sign out</TextButton>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
