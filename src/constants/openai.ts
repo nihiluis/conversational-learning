@@ -1,0 +1,1 @@
+export const OPENAI_ACCESS_KEY_CREATE_LINK = "https://platform.openai.com/account/api-keys"

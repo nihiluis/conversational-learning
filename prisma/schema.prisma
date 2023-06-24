@@ -25,11 +25,11 @@ model EduSubject {
 }
 
 model EduCourse {
-  id         String       @id @default(uuid())
-  title      String
-  lectures   EduLecture[]
-  Subject EduSubject?  @relation(fields: [subjectId], references: [id])
-  subjectId  String?
+  id        String       @id @default(uuid())
+  title     String
+  lectures  EduLecture[]
+  Subject   EduSubject?  @relation(fields: [subjectId], references: [id])
+  subjectId String?
 }
 
 model EduLecture {
@@ -37,4 +37,9 @@ model EduLecture {
   title    String
   Course   EduCourse? @relation(fields: [courseId], references: [id])
   courseId String?
+}
+
+model EduUser {
+  mail  String @id
+  level Int    @default(0)
 }

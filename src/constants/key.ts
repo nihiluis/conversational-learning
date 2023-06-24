@@ -1,0 +1,1 @@
+export const LOCAL_STORAGE_OPENAI_ACCESS_KEY = "openAiAccessKey"

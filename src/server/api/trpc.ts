@@ -17,7 +17,9 @@
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next"
 
 /** Replace this with an object if you want to pass things to `createContextInner`. */
-type CreateContextOptions = Record<string, never>
+type CreateContextOptions = {
+  session: Session | null
+}
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use it, you can export
@@ -29,11 +31,10 @@ type CreateContextOptions = Record<string, never>
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-const createInnerTRPCContext = (_opts: CreateContextOptions) => {
+const createInnerTRPCContext = (opts: CreateContextOptions) => {
   const prisma = prismaClient
   const logger = pino({ level: isDevelopmentMode() ? "debug" : "info" })
-
-  return { prisma, logger }
+  return { prisma, logger, session: opts.session }
 }
 
 /**
@@ -42,8 +43,13 @@ const createInnerTRPCContext = (_opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = (_opts: CreateNextContextOptions) => {
-  return createInnerTRPCContext({})
+export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+  const { req, res } = opts
+
+  // Get the session from the server using the unstable_getServerSession wrapper function
+  const session = await getServerAuthSession({ req, res })
+
+  return createInnerTRPCContext({ session })
 }
 
 /**
@@ -60,6 +66,8 @@ import { PrismaClient } from "@prisma/client"
 import { pino } from "pino"
 import { isDevelopmentMode } from "~/constants/env"
 import { prismaClient } from "../db"
+import { getServerAuthSession } from "../auth"
+import { Session } from "next-auth"
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,

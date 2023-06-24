@@ -1,5 +1,11 @@
 import { useRecoilState } from "recoil"
-import { ChatMessage, ChatPhase, chatMessagesState } from "~/state"
+import {
+  ChatMessage,
+  ChatPhase,
+  chatMessagesState,
+  settingsState,
+  userState,
+} from "~/state"
 import ChatMessageContainer from "./ChatMessageContainer"
 import { FiLoader, FiSend } from "react-icons/fi"
 import { useCallback, useEffect, useState } from "react"
@@ -11,6 +17,8 @@ import {
 } from "~/constants/prompts"
 import { queryTutor } from "~/server/lib/openai"
 import { PHASE_CONSTRUCTIVE, PHASE_INTERACTIVE } from "~/constants/chat"
+import { canUserWriteMessage } from "~/server/lib/user"
+import classNames from "classnames"
 
 interface Props {
   currentPhase: ChatPhase
@@ -28,8 +36,13 @@ export default function Chat({
   const [textareaText, setTextareaText] = useState("")
   const [initializeRunTried, setInitializeRunTried] = useState(false)
 
+  const [userData] = useRecoilState(userState)
+  const [settings] = useRecoilState(settingsState)
+
   const resolveAnswerMutation = api.chat.resolveAnswer.useMutation()
   const resolveLocalAnswerMutation = api.chat.resolveLocalAnswer.useMutation()
+
+  const canSendMessages = canUserWriteMessage(userData, settings)
 
   const chatLoading =
     resolveAnswerMutation.isLoading || resolveLocalAnswerMutation.isLoading
@@ -54,6 +67,7 @@ export default function Chat({
   const sendUserMessage = useCallback(async () => {
     if (textareaText === "") return
     if (chatLoading) return
+    if (!canSendMessages) return
 
     const currentMessages = [...messages]
     currentMessages.push({
@@ -172,7 +186,7 @@ export default function Chat({
   return (
     <div className="mx-auto lg:max-w-4xl xl:max-w-6xl">
       <div className="mb-4 flex flex-col justify-end gap-2">
-        <div className="flex flex-col overflow-hidden rounded drop-shadow-sm">
+        <div className="flex flex-col overflow-hidden rounded-lg drop-shadow-sm">
           {filteredMessages.map((msg, idx) => (
             <ChatMessageContainer
               key={`chatmsg-${msg.id}`}
@@ -183,11 +197,19 @@ export default function Chat({
           ))}
         </div>
       </div>
+      {!canSendMessages && (
+        <div className="mb-4 rounded-lg bg-yellow-100 p-4">
+          You don't have a verified account. To use the app, please enter your
+          OpenAI API token in the settings. The token will not be shared and
+          only used locally in your browser.
+        </div>
+      )}
       <div className="relative flex">
         <div className="relative flex w-full gap-4 lg:mx-auto lg:max-w-2xl xl:max-w-3xl">
           <textarea
             placeholder="Send a message."
             value={textareaText}
+            disabled={!canSendMessages}
             onChange={event => setTextareaText(event.target.value)}
             className="textarea flex-grow"
           />
@@ -195,19 +217,26 @@ export default function Chat({
             className="absolute bottom-0 right-0 text-gray-600"
             onClick={sendUserMessage}>
             {chatLoading && <FiLoader className="mb-3 mr-3 animate-spin" />}
-            {!chatLoading && <FiSend className="mb-3 mr-3 cursor-pointer" />}
+            {!chatLoading && (
+              <FiSend
+                className={classNames("mb-3 mr-3", {
+                  "cursor-pointer": canSendMessages,
+                  "!text-gray-300": !canSendMessages,
+                })}
+              />
+            )}
           </div>
         </div>
         <div className="absolute right-0 flex">
           {phase === PHASE_CONSTRUCTIVE && (
             <button
-              className="rounded bg-green-300 p-2 drop-shadow-sm hover:bg-green-400"
+              className="rounded-lg bg-green-300 p-2 drop-shadow-sm hover:bg-green-400"
               onClick={() => requestQuestion(false)}>
               Next question
             </button>
           )}
           {phase === PHASE_INTERACTIVE && (
-            <button className="rounded bg-green-300 p-2 drop-shadow-sm hover:bg-green-400">
+            <button className="rounded-lg bg-green-300 p-2 drop-shadow-sm hover:bg-green-400">
               Help me
             </button>
           )}

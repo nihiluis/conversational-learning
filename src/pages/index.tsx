@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { HiChevronDown } from "react-icons/hi2"
 import { useRecoilState } from "recoil"
-import AuthBar from "~/components/AuthBar"
+import AuthLoader from "~/components/AuthLoader"
 import Chat from "~/components/chat"
 import HelpText from "~/components/HelpText"
 import Onboarding from "~/components/onboarding/Onboarding"
@@ -44,10 +44,8 @@ const Home: NextPage = () => {
         {/* <div className="">
           <AuthBar />
         </div> */}
-        <div className="relative flex h-full">
-          <Sidebar className="h-full w-[260px]" />
-          <div className="h-full flex-grow">
-            {/* <iframe
+
+        {/* <iframe
             width="560"
             height="315"
             src="https://www.youtube.com/embed/7KHdV6FSpo8"
@@ -55,37 +53,35 @@ const Home: NextPage = () => {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen></iframe> */}
-            <Onboarding />
-            <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
-              {!isDevelopmentMode() && <HelpText />}
-              <ProcessSteps phase={currentPhase} setPhase={setCurrentPhase} />
-              <div className="flex-grow">
-                {currentPhase === PHASE_ACTIVE && (
-                  <Chat
-                    currentPhase={currentPhase}
-                    phase={PHASE_ACTIVE}
-                    messages={chatMessages[PHASE_ACTIVE]}
-                    setMessages={setChatMessagesWrapper}
-                  />
-                )}
-                {currentPhase === PHASE_CONSTRUCTIVE && (
-                  <Chat
-                    currentPhase={currentPhase}
-                    phase={PHASE_CONSTRUCTIVE}
-                    messages={chatMessages[PHASE_CONSTRUCTIVE]}
-                    setMessages={setChatMessagesWrapper}
-                  />
-                )}
-                {currentPhase === PHASE_INTERACTIVE && (
-                  <Chat
-                    currentPhase={currentPhase}
-                    phase={PHASE_INTERACTIVE}
-                    messages={chatMessages[PHASE_INTERACTIVE]}
-                    setMessages={setChatMessagesWrapper}
-                  />
-                )}
-              </div>
-            </div>
+        <Onboarding />
+        <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
+          {!isDevelopmentMode() && <HelpText />}
+          <ProcessSteps phase={currentPhase} setPhase={setCurrentPhase} />
+          <div className="flex-grow">
+            {currentPhase === PHASE_ACTIVE && (
+              <Chat
+                currentPhase={currentPhase}
+                phase={PHASE_ACTIVE}
+                messages={chatMessages[PHASE_ACTIVE]}
+                setMessages={setChatMessagesWrapper}
+              />
+            )}
+            {currentPhase === PHASE_CONSTRUCTIVE && (
+              <Chat
+                currentPhase={currentPhase}
+                phase={PHASE_CONSTRUCTIVE}
+                messages={chatMessages[PHASE_CONSTRUCTIVE]}
+                setMessages={setChatMessagesWrapper}
+              />
+            )}
+            {currentPhase === PHASE_INTERACTIVE && (
+              <Chat
+                currentPhase={currentPhase}
+                phase={PHASE_INTERACTIVE}
+                messages={chatMessages[PHASE_INTERACTIVE]}
+                setMessages={setChatMessagesWrapper}
+              />
+            )}
           </div>
         </div>
       </PageWrapper>

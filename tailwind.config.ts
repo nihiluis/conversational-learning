@@ -9,6 +9,7 @@ export default {
     },
     extend: {},
   },
-  daisyui: { logs: false },
+  darkMode: "class",
+  daisyui: { logs: false, themes: ["light"] },
   plugins: [daisyui],
 } satisfies Config

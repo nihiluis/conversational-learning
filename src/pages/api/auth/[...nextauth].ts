@@ -4,8 +4,21 @@ import FacebookProvider from "next-auth/providers/facebook"
 import GoogleProvider from "next-auth/providers/google"
 import EmailProvider from "next-auth/providers/email"
 import GithubProvider from "next-auth/providers/github"
+import { prismaClient } from "~/server/db"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 
-export default NextAuth({
+export const authOptions = {
+  // Include user data on session
+  // callbacks: {
+  //   session({ session, user }: any) {
+  //     if (session.user) {
+  //       session.user.mail = user.mail
+  //     }
+  //     return session
+  //   },
+  // },
+  // Configure one or more authentication providers
+  // adapter: PrismaAdapter(prismaClient),
   providers: [
     // OAuth authentication providers...
     // AppleProvider({
@@ -30,4 +43,6 @@ export default NextAuth({
       clientSecret: process.env.GITHUB_SECRET_DEV!,
     }),
   ],
-})
+}
+
+export default NextAuth(authOptions)
