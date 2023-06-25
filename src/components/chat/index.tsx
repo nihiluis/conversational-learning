@@ -3,6 +3,8 @@ import {
   ChatMessage,
   ChatPhase,
   chatMessagesState,
+  courseState,
+  lectureState,
   settingsState,
   userState,
 } from "~/state"
@@ -19,6 +21,11 @@ import { queryTutor } from "~/server/lib/openai"
 import { PHASE_CONSTRUCTIVE, PHASE_INTERACTIVE } from "~/constants/chat"
 import { canUserWriteMessage } from "~/server/lib/user"
 import classNames from "classnames"
+import {
+  NO_COURSE_LECTURE_SELECTED,
+  NO_PERMISSION,
+  createClientOnlySystemMessage,
+} from "~/constants/messages"
 
 interface Props {
   currentPhase: ChatPhase
@@ -38,6 +45,8 @@ export default function Chat({
 
   const [userData] = useRecoilState(userState)
   const [settings] = useRecoilState(settingsState)
+  const [activeCourse] = useRecoilState(courseState)
+  const [activeLecture] = useRecoilState(lectureState)
 
   const resolveAnswerMutation = api.chat.resolveAnswer.useMutation()
   const resolveLocalAnswerMutation = api.chat.resolveLocalAnswer.useMutation()
@@ -77,6 +86,7 @@ export default function Chat({
       addToPrompt: true,
       showInUi: true,
       error: "",
+      type: "default",
     })
 
     setMessages(phase, currentMessages)
@@ -105,6 +115,7 @@ export default function Chat({
         addToPrompt: true,
         showInUi,
         error: "",
+        type: "default",
       })
 
       setMessages(phase, currentMessages)
@@ -126,6 +137,7 @@ export default function Chat({
         addToPrompt: true,
         showInUi,
         error: "",
+        type: "default",
       })
 
       setMessages(phase, currentMessages)
@@ -183,27 +195,41 @@ export default function Chat({
 
   const filteredMessages = messages.filter(msg => msg.showInUi)
 
+  const isCourseAndLectureSelected = !!activeCourse && !!activeLecture
+
   return (
     <div className="mx-auto lg:max-w-4xl xl:max-w-6xl">
       <div className="mb-4 flex flex-col justify-end gap-2">
         <div className="flex flex-col overflow-hidden rounded-lg drop-shadow-sm">
-          {filteredMessages.map((msg, idx) => (
+          {!canSendMessages && (
             <ChatMessageContainer
-              key={`chatmsg-${msg.id}`}
-              message={msg}
-              isLastMessage={idx == filteredMessages.length - 1}
+              message={createClientOnlySystemMessage(NO_PERMISSION, "error")}
+              isLastMessage={false}
               retryLastMessage={retryLastMessage}
             />
-          ))}
+          )}
+          {canSendMessages && !isCourseAndLectureSelected && (
+            <ChatMessageContainer
+              message={createClientOnlySystemMessage(
+                NO_COURSE_LECTURE_SELECTED,
+                "warning"
+              )}
+              isLastMessage={false}
+              retryLastMessage={retryLastMessage}
+            />
+          )}
+          {canSendMessages &&
+            isCourseAndLectureSelected &&
+            filteredMessages.map((msg, idx) => (
+              <ChatMessageContainer
+                key={`chatmsg-${msg.id}`}
+                message={msg}
+                isLastMessage={idx == filteredMessages.length - 1}
+                retryLastMessage={retryLastMessage}
+              />
+            ))}
         </div>
       </div>
-      {!canSendMessages && (
-        <div className="mb-4 rounded-lg bg-yellow-100 p-4">
-          You don't have a verified account. To use the app, please enter your
-          OpenAI API token in the settings. The token will not be shared and
-          only used locally in your browser.
-        </div>
-      )}
       <div className="relative flex">
         <div className="relative flex w-full gap-4 lg:mx-auto lg:max-w-2xl xl:max-w-3xl">
           <textarea

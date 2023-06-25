@@ -9,9 +9,12 @@ import { EduCourse, EduLecture, EduUser } from "@prisma/client"
 import { CourseWithLectures } from "./server/api/routers/onboarding"
 import { LOCAL_STORAGE_OPENAI_ACCESS_KEY } from "./constants/key"
 
+export type ChatMessageType = "default" | "error" | "warning"
+
 export interface ChatMessage {
   id: string
   text: string
+  type: ChatMessageType
   role: "user" | "system" | "assistant"
   // whether the message should be added to the prompt
   addToPrompt: boolean
@@ -84,6 +87,7 @@ export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
         addToPrompt: false,
         showInUi: true,
         error: "",
+        type: "default",
       },
     ],
     constructive: [
@@ -94,6 +98,7 @@ export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
         addToPrompt: false,
         showInUi: true,
         error: "",
+        type: "default",
       },
     ],
     interactive: [
@@ -104,6 +109,7 @@ export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
         addToPrompt: false,
         showInUi: true,
         error: "",
+        type: "default",
       },
     ],
   },

@@ -36,6 +36,8 @@ export default function ChatMessageContainer({
         {
           "bg-gray-50": isSystem,
           "bg-white": !isSystem,
+          "bg-red-200": message.type === "error",
+          "bg-yellow-100": message.type === "warning",
         }
       )}>
       <div

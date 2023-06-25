@@ -8,6 +8,8 @@ import { CourseWithLectures } from "~/server/api/routers/onboarding"
 import OnboardingRow from "./OnboardingRow"
 import { useRecoilState } from "recoil"
 import { courseState, lectureState } from "~/state"
+import { LoadingSpinnerText } from "../ui/LoadingSpinner"
+import ErrorText from "../ui/ErrorText"
 
 export default function Onboarding() {
   const getCoursesQuery = api.onboarding.getOnboarding.useQuery({})
@@ -51,10 +53,29 @@ export default function Onboarding() {
               <div className="bg-blue-50 p-6">
                 <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-4xl xl:max-w-6xl">
                   <div className="flex flex-col items-center justify-center">
-                    <OnboardingPanel
-                      courses={courses}
-                      possibleLectures={possibleLectures}
-                    />
+                    {getCoursesQuery.isLoading && (
+                      <LoadingSpinnerText text="Loading courses..." />
+                    )}
+                    {!getCoursesQuery.isLoading && getCoursesQuery.error && (
+                      <ErrorText>
+                        Unable to load courses due to an error.
+                      </ErrorText>
+                    )}
+                    {!getCoursesQuery.isLoading &&
+                      !getCoursesQuery.error &&
+                      courses.length === 0 && (
+                        <ErrorText>
+                          No courses found. Something is wrong.
+                        </ErrorText>
+                      )}
+                    {!getCoursesQuery.isLoading &&
+                      !getCoursesQuery.error &&
+                      courses.length > 0 && (
+                        <OnboardingPanel
+                          courses={courses}
+                          possibleLectures={possibleLectures}
+                        />
+                      )}
                     {/* <div className="divider my-2 !bg-gray-50"></div> */}
                   </div>
                 </div>
