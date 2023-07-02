@@ -30,13 +30,23 @@ model EduCourse {
   lectures  EduLecture[]
   Subject   EduSubject?  @relation(fields: [subjectId], references: [id])
   subjectId String?
+  disabled  Boolean      @default(false)
 }
 
 model EduLecture {
-  id       String     @id @default(uuid())
-  title    String
-  Course   EduCourse? @relation(fields: [courseId], references: [id])
-  courseId String?
+  id            String            @id @default(uuid())
+  title         String
+  Course        EduCourse?        @relation(fields: [courseId], references: [id])
+  courseId      String?
+  learningGoals EduLearningGoal[]
+  disabled      Boolean           @default(false)
+}
+
+model EduLearningGoal {
+  id        String      @id @default(uuid())
+  title     String
+  Lecture   EduLecture? @relation(fields: [lectureId], references: [id])
+  lectureId String?
 }
 
 model EduUser {

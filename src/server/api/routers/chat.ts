@@ -19,6 +19,7 @@ export const chatRouter = createTRPCRouter({
             addToPrompt: z.boolean(),
             showInUi: z.boolean(),
             error: z.string(),
+            type: z.enum(["default", "error", "warning"]),
           })
         ),
       })
@@ -33,6 +34,7 @@ export const chatRouter = createTRPCRouter({
         error: "",
         addToPrompt: true,
         showInUi: true,
+        type: "default",
       }
     }),
   resolveLocalAnswer: publicProcedure
@@ -60,6 +62,7 @@ export const chatRouter = createTRPCRouter({
         error: "",
         addToPrompt: true,
         showInUi: true,
+        type: "default",
       }
     }),
 })

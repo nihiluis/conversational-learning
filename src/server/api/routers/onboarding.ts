@@ -7,9 +7,9 @@ interface GetOnboardingResponse {
   courses: CourseWithLectures[]
 }
 
-export type CourseWithLectures = (EduCourse & {
+export type CourseWithLectures = EduCourse & {
   lectures: EduLecture[]
-})
+}
 
 export const onboardingRouter = createTRPCRouter({
   getOnboarding: publicProcedure
@@ -17,6 +17,7 @@ export const onboardingRouter = createTRPCRouter({
     .query(async ({ input, ctx }): Promise<GetOnboardingResponse> => {
       const courses = await ctx.prisma.eduCourse.findMany({
         include: { lectures: true },
+        where: { disabled: { equals: false } },
       })
 
       return {
