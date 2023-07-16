@@ -47,7 +47,7 @@ export default function OnboardingCombobox<T extends Item>({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
           afterLeave={() => setSearchQuery("")}>
-          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
             {items.length === 0 && searchQuery !== "" ? (
               <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                 Nothing found.

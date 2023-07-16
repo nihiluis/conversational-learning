@@ -1,13 +1,10 @@
 import { atom, selector } from "recoil"
-import {
-  WELCOME_MESSAGE_ACTIVE,
-  WELCOME_MESSAGE_CONSTRUCTIVE,
-  WELCOME_MESSAGE_INTERACTIVE,
-} from "./constants/messages"
+import { WELCOME_MESSAGE } from "./constants/messages"
 import { isDevelopmentMode } from "./constants/env"
 import { EduCourse, EduLecture, EduUser } from "@prisma/client"
 import { CourseWithLectures } from "./server/api/routers/onboarding"
 import { LOCAL_STORAGE_OPENAI_ACCESS_KEY } from "./constants/key"
+import { uuidv4 } from "./constants/reexports"
 
 export type ChatMessageType = "default" | "error" | "warning"
 
@@ -76,41 +73,17 @@ export const userState = atom<EduUser | null>({
   default: null,
 })
 
-export const chatMessagesState = atom<Record<ChatPhase, ChatMessage[]>>({
+export const chatMessagesState = atom<ChatMessage[]>({
   key: "chatMessages",
-  default: {
-    active: [
-      {
-        id: "",
-        text: WELCOME_MESSAGE_ACTIVE,
-        role: "system",
-        addToPrompt: false,
-        showInUi: true,
-        error: "",
-        type: "default",
-      },
-    ],
-    constructive: [
-      {
-        id: "",
-        text: WELCOME_MESSAGE_CONSTRUCTIVE,
-        role: "system",
-        addToPrompt: false,
-        showInUi: true,
-        error: "",
-        type: "default",
-      },
-    ],
-    interactive: [
-      {
-        id: "",
-        text: WELCOME_MESSAGE_INTERACTIVE,
-        role: "system",
-        addToPrompt: false,
-        showInUi: true,
-        error: "",
-        type: "default",
-      },
-    ],
-  },
+  default: [
+    {
+      id: uuidv4(),
+      text: WELCOME_MESSAGE,
+      role: "system",
+      addToPrompt: false,
+      showInUi: true,
+      error: "",
+      type: "default",
+    },
+  ],
 })

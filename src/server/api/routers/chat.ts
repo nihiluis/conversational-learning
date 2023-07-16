@@ -3,14 +3,15 @@ import { z } from "zod"
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc"
 import { queryTutor } from "~/server/lib/openai"
 import { ChatMessage } from "~/state"
-import { v4 as uuidv4 } from "uuid"
-import protect from "await-protect"
+import { getUserFromCtx } from "~/server/lib/user"
+import { uuidv4 } from "~/constants/reexports"
+import { hasUserServerOpenAiAccess } from "~/lib/user"
+import { SITE_NAME } from "~/constants/env"
 
 export const chatRouter = createTRPCRouter({
   resolveAnswer: publicProcedure
     .input(
       z.object({
-        phase: z.enum(["active", "constructive", "interactive"]),
         messages: z.array(
           z.object({
             id: z.string(),
@@ -24,45 +25,34 @@ export const chatRouter = createTRPCRouter({
         ),
       })
     )
-    .mutation(async ({ input }): Promise<ChatMessage> => {
-      const answer = await queryTutor(input.phase, input.messages)
+    .mutation(async ({ input, ctx }): Promise<ChatMessage> => {
+      const user = await getUserFromCtx(ctx)
+      if (!user) {
+        return {
+          id: uuidv4(),
+          text: `Unable to authenticate with ${SITE_NAME}. Are you logged in?`,
+          error: "User not found.",
+          addToPrompt: false,
+          showInUi: true,
+          role: "system",
+          type: "error",
+        }
+      }
 
-      return {
-        id: uuidv4(),
-        text: answer,
-        role: "assistant",
-        error: "",
-        addToPrompt: true,
-        showInUi: true,
-        type: "default",
+      if (!hasUserServerOpenAiAccess(user)) {
+        return {
+          id: uuidv4(),
+          text: `You have no access to the ChatGPT API through ${SITE_NAME}. Please provide your own OpenAI access key in the settings`,
+          error: "Unauthorized",
+          addToPrompt: false,
+          showInUi: true,
+          role: "system",
+          type: "error",
+        }
       }
-    }),
-  resolveLocalAnswer: publicProcedure
-    .input(
-      z.object({
-        phase: z.enum(["active", "constructive", "interactive"]),
-        answer: z.string(),
-        messages: z.array(
-          z.object({
-            id: z.string(),
-            text: z.string(),
-            role: z.enum(["user", "system", "assistant"]),
-            addToPrompt: z.boolean(),
-            showInUi: z.boolean(),
-            error: z.string(),
-          })
-        ),
-      })
-    )
-    .mutation(async ({ input }): Promise<ChatMessage> => {
-      return {
-        id: uuidv4(),
-        text: input.answer,
-        role: "assistant",
-        error: "",
-        addToPrompt: true,
-        showInUi: true,
-        type: "default",
-      }
+
+      const answer = await queryTutor(input.messages)
+
+      return answer
     }),
 })

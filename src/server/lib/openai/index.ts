@@ -5,17 +5,9 @@ import {
   ChatCompletionRequestMessage,
 } from "openai"
 import { OPENAI_MODEL_NAME } from "./params"
-import {
-  BASE_ACTIVE_PROMPT,
-  BASE_CONSTRUCTIVE_PROMPT,
-  BASE_INTERACTIVE_PROMPT,
-} from "~/constants/prompts"
-import { ChatMessage, ChatPhase } from "~/state"
-import {
-  PHASE_ACTIVE,
-  PHASE_CONSTRUCTIVE,
-  PHASE_INTERACTIVE,
-} from "~/constants/chat"
+import { ChatMessage } from "~/state"
+import protect from "await-protect"
+import { uuidv4 } from "~/constants/reexports"
 
 const openaiWrapper = getOpenAIWrapper()
 
@@ -35,46 +27,57 @@ export function createQueryMessage(
   return { role, content: text }
 }
 
-function getBasePrompt(phase: ChatPhase): string {
-  switch (phase) {
-    case PHASE_ACTIVE:
-      return BASE_ACTIVE_PROMPT
-    case PHASE_CONSTRUCTIVE:
-      return BASE_CONSTRUCTIVE_PROMPT
-    case PHASE_INTERACTIVE:
-      return BASE_INTERACTIVE_PROMPT
-  }
-}
-
 export async function queryTutor(
-  phase: ChatPhase,
   messages: ChatMessage[]
-): Promise<string> {
+): Promise<ChatMessage> {
   const filteredMessages = messages
     .filter(msg => msg.addToPrompt)
     .map(msg => createQueryMessage(msg.role, msg.text))
 
-  const basePrompt = getBasePrompt(phase)
+  const [res, err] = await protect(
+    openaiWrapper.createChatCompletion({
+      model: OPENAI_MODEL_NAME,
+      messages: filteredMessages,
+      temperature: 0,
+      max_tokens: 1024,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    })
+  )
 
-  const wrappedMessages = [
-    createQueryMessage("system", basePrompt),
-    ...filteredMessages,
-  ]
-
-  const res = await openaiWrapper.createChatCompletion({
-    model: OPENAI_MODEL_NAME,
-    messages: wrappedMessages,
-    temperature: 0,
-    max_tokens: 1024,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-  })
+  if (err) {
+    return {
+      id: uuidv4(),
+      text: "An error occured while querying the ChatGPT API.",
+      role: "system",
+      addToPrompt: false,
+      showInUi: true,
+      error: err.message,
+      type: "error",
+    }
+  }
 
   const answer = res!.data.choices[0]?.message
   if (!answer) {
-    return "Unable to read response from GPT"
+    return {
+      id: uuidv4(),
+      text: "Unable to read response from GPT",
+      role: "system",
+      addToPrompt: false,
+      showInUi: true,
+      error: "",
+      type: "error",
+    }
   }
 
-  return answer.content
+  return {
+    id: uuidv4(),
+    text: answer.content,
+    role: answer.role,
+    addToPrompt: true,
+    showInUi: true,
+    error: "",
+    type: "default",
+  }
 }

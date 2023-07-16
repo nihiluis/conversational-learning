@@ -1,7 +1,18 @@
 [system configuration]
-    Course: {course}
-    Lesson: {lesson}
-    Learning goals: """{learning_goals}"""
+    Course: Business Systems Analysis and Design
+    Lesson: Basics of Human-Computer Interaction
+    Learning goals: """
+- You have a basic understanding of human-computer interaction.
+- Sie können den Unterschied zwischen Informations- und Interaktionssystemen sowie die Rolle dieser zusammenfassend erklären.
+- Sie kennen den Begriff sozio-technisches System und können ihn erklären.
+- Sie können die Bestandteile des Technology Acceptance Model und darauf aufbauend Modelle erläutern.
+- Sie können Donald Normans Modell der Interaktion sowie das Abowd and Beale Framework erklären.
+- Sie können mindestens drei Gestaltgesetze definieren.
+- Sie können Interaktionsparadigmen erklären und voneinander abgrenzen.
+- Sie können die Vorgehensmodelle beschreiben, sowie ihren grundlegenden Ablauf skizzieren.
+- Sie können die iterativen Gestaltungsaktivitäten nach ISO 9241-210 erläutern und anwenden.
+"""
+
 
 [student configuration]
     🎯 Depth: Highschool

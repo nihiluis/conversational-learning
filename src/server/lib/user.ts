@@ -1,12 +1,16 @@
 import { EduUser } from "@prisma/client"
-import { Settings } from "~/state"
+import { ServerContext } from "../api/trpc"
 
-export function canUserWriteMessage(
-  userData: EduUser | undefined | null,
-  settings: Settings
-): boolean {
-  const hasServerOpenAiAccess = userData ? userData.level > 0 : false
-  const hasAccessKeyConfigured = settings.openAiAccessKey.length > 0
+export async function getUserFromCtx(
+  ctx: ServerContext
+): Promise<EduUser | null> {
+  const mail = ctx.session?.user?.email
 
-  return hasServerOpenAiAccess || hasAccessKeyConfigured
+  if (!mail) {
+    return null
+  }
+
+  const userData = await ctx.prisma.eduUser.findFirst({ where: { mail } })
+
+  return userData
 }

@@ -1,8 +1,6 @@
 import { useRecoilState } from "recoil"
 import {
   ChatMessage,
-  ChatPhase,
-  chatMessagesState,
   courseState,
   lectureState,
   settingsState,
@@ -13,35 +11,26 @@ import { FiLoader, FiSend } from "react-icons/fi"
 import { useCallback, useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { api } from "~/utils/api"
-import {
-  CONSTRUCTIVE_GENERATE_QUESTION_PROMPT,
-  INTERACTIVE_GENERATE_TASK_PROMPT,
-} from "~/constants/prompts"
-import { queryTutor } from "~/server/lib/openai"
-import { PHASE_CONSTRUCTIVE, PHASE_INTERACTIVE } from "~/constants/chat"
-import { canUserWriteMessage } from "~/server/lib/user"
+import { canUserWriteMessage } from "~/lib/user"
 import classNames from "classnames"
 import {
   NO_COURSE_LECTURE_SELECTED,
   NO_PERMISSION,
   createClientOnlySystemMessage,
 } from "~/constants/messages"
+import { generateBasePrompt } from "~/server/lib/generateBasePrompt"
+import { queryTutor } from "~/server/lib/openai"
 
 interface Props {
-  currentPhase: ChatPhase
-  phase: ChatPhase
   messages: ChatMessage[]
-  setMessages: (phase: ChatPhase, messages: ChatMessage[]) => void
+  setMessages: (messages: ChatMessage[]) => void
 }
 
-export default function Chat({
-  phase,
-  currentPhase,
-  messages,
-  setMessages,
-}: Props) {
+export default function Chat({ messages, setMessages }: Props) {
   const [textareaText, setTextareaText] = useState("")
   const [initializeRunTried, setInitializeRunTried] = useState(false)
+  const [localAnswerIsLoading, setLocalAnswerIsLoading] = useState(false)
+  const [isReadyToStart, setIsReadyToStart] = useState(false)
 
   const [userData] = useRecoilState(userState)
   const [settings] = useRecoilState(settingsState)
@@ -49,18 +38,28 @@ export default function Chat({
   const [activeLecture] = useRecoilState(lectureState)
 
   const resolveAnswerMutation = api.chat.resolveAnswer.useMutation()
-  const resolveLocalAnswerMutation = api.chat.resolveLocalAnswer.useMutation()
 
   const canSendMessages = canUserWriteMessage(userData, settings)
 
-  const chatLoading =
-    resolveAnswerMutation.isLoading || resolveLocalAnswerMutation.isLoading
+  const chatLoading = resolveAnswerMutation.isLoading || localAnswerIsLoading
 
   const fetchMessages = useCallback(
     async (messages: ChatMessage[]) => {
-      resolveAnswerMutation.mutate({ phase, messages })
+      if (canSendMessages) {
+        resolveAnswerMutation.mutate({ messages })
+      } else {
+        setLocalAnswerIsLoading(true)
+        const responseMessage = await queryTutor(messages)
+        setLocalAnswerIsLoading(false)
+        setMessages([...messages, responseMessage])
+      }
     },
-    [resolveAnswerMutation, phase]
+    [
+      resolveAnswerMutation,
+      canSendMessages,
+      setLocalAnswerIsLoading,
+      setMessages,
+    ]
   )
 
   useEffect(() => {
@@ -70,7 +69,7 @@ export default function Chat({
     }
 
     const messagesWithAnswer = [...messages, answerMessage]
-    setMessages(phase, messagesWithAnswer)
+    setMessages(messagesWithAnswer)
   }, [resolveAnswerMutation.data])
 
   const sendUserMessage = useCallback(async () => {
@@ -79,6 +78,13 @@ export default function Chat({
     if (!canSendMessages) return
 
     const currentMessages = [...messages]
+    if (currentMessages.length === 1) {
+      // only welcome message is in => tells the app that the user is ready to start
+      setIsReadyToStart(true)
+      setTextareaText("")
+      return
+    }
+
     currentMessages.push({
       id: uuidv4(),
       role: "user",
@@ -89,63 +95,19 @@ export default function Chat({
       type: "default",
     })
 
-    setMessages(phase, currentMessages)
+    setMessages(currentMessages)
 
     await fetchMessages(currentMessages)
 
     setTextareaText("")
   }, [
-    phase,
     messages,
     setMessages,
     textareaText,
     setTextareaText,
     fetchMessages,
+    setIsReadyToStart,
   ])
-
-  const generateInteractiveTask = useCallback(
-    async (showInUi: boolean) => {
-      if (chatLoading) return
-
-      const currentMessages = [...messages]
-      currentMessages.push({
-        id: uuidv4(),
-        role: "assistant",
-        text: INTERACTIVE_GENERATE_TASK_PROMPT,
-        addToPrompt: true,
-        showInUi,
-        error: "",
-        type: "default",
-      })
-
-      setMessages(phase, currentMessages)
-
-      await fetchMessages(currentMessages)
-    },
-    [messages, setMessages, fetchMessages]
-  )
-
-  const requestQuestion = useCallback(
-    async (showInUi: boolean) => {
-      if (chatLoading) return
-
-      const currentMessages = [...messages]
-      currentMessages.push({
-        id: uuidv4(),
-        role: "user",
-        text: CONSTRUCTIVE_GENERATE_QUESTION_PROMPT,
-        addToPrompt: true,
-        showInUi,
-        error: "",
-        type: "default",
-      })
-
-      setMessages(phase, currentMessages)
-
-      await fetchMessages(currentMessages)
-    },
-    [messages, setMessages, chatLoading, fetchMessages]
-  )
 
   const retryLastMessage = useCallback(async () => {
     if (chatLoading) return
@@ -156,42 +118,57 @@ export default function Chat({
       retryMessages.pop()
     }
 
-    setMessages(phase, retryMessages)
+    setMessages(retryMessages)
 
     await fetchMessages(retryMessages)
-  }, [messages, phase, fetchMessages])
+  }, [messages, fetchMessages])
 
   useEffect(() => {
+    if (!isReadyToStart) {
+      return
+    }
+
     if (initializeRunTried) {
       return
     }
 
-    if (phase !== currentPhase) {
+    if (!activeLecture || !activeCourse) {
       return
     }
 
     const promptMessages = messages.filter(msg => msg.addToPrompt)
-    if (phase === PHASE_CONSTRUCTIVE && promptMessages.length === 0) {
-      requestQuestion(false)
+    if (promptMessages.length === 0) {
+      const basePrompt = generateBasePrompt({
+        lecture: activeLecture,
+        course: activeCourse,
+      })
+
+      const newMessages: ChatMessage[] = [
+        ...messages,
+        {
+          id: uuidv4(),
+          text: basePrompt,
+          type: "default",
+          role: "system",
+          addToPrompt: true,
+          showInUi: false,
+          error: "",
+        },
+      ]
+
+      fetchMessages(newMessages)
+
+      setMessages(newMessages)
       setInitializeRunTried(true)
     }
-  }, [])
-
-  useEffect(() => {
-    if (initializeRunTried) {
-      return
-    }
-
-    if (phase !== currentPhase) {
-      return
-    }
-
-    const promptMessages = messages.filter(msg => msg.addToPrompt)
-    if (phase === PHASE_INTERACTIVE && promptMessages.length === 0) {
-      generateInteractiveTask(false)
-      setInitializeRunTried(true)
-    }
-  }, [])
+  }, [
+    activeLecture,
+    activeCourse,
+    setInitializeRunTried,
+    setMessages,
+    fetchMessages,
+    isReadyToStart,
+  ])
 
   const filteredMessages = messages.filter(msg => msg.showInUi)
 
@@ -254,14 +231,7 @@ export default function Chat({
           </div>
         </div>
         <div className="absolute right-0 flex">
-          {phase === PHASE_CONSTRUCTIVE && (
-            <button
-              className="rounded-lg bg-green-300 p-2 drop-shadow-sm hover:bg-green-400"
-              onClick={() => requestQuestion(false)}>
-              Next question
-            </button>
-          )}
-          {phase === PHASE_INTERACTIVE && (
+          {false && (
             <button className="rounded-lg bg-green-300 p-2 drop-shadow-sm hover:bg-green-400">
               Help me
             </button>
