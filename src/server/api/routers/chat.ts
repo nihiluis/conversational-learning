@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc"
-import { queryTutor } from "~/server/lib/openai"
+import { defaultOpenAIWrapper, queryTutor } from "~/lib/openai"
 import { ChatMessage } from "~/state"
 import { getUserFromCtx } from "~/server/lib/user"
 import { uuidv4 } from "~/constants/reexports"
@@ -42,8 +42,8 @@ export const chatRouter = createTRPCRouter({
       if (!hasUserServerOpenAiAccess(user)) {
         return {
           id: uuidv4(),
-          text: `You have no access to the ChatGPT API through ${SITE_NAME}. Please provide your own OpenAI access key in the settings`,
-          error: "Unauthorized",
+          text: `You have no access to the ChatGPT API through ${SITE_NAME}. Please provide your own OpenAI access key in the settings.`,
+          error: "Unauthorized.",
           addToPrompt: false,
           showInUi: true,
           role: "system",
@@ -51,7 +51,7 @@ export const chatRouter = createTRPCRouter({
         }
       }
 
-      const answer = await queryTutor(input.messages)
+      const answer = await queryTutor(defaultOpenAIWrapper, input.messages)
 
       return answer
     }),

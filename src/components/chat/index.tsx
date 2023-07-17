@@ -11,7 +11,7 @@ import { FiLoader, FiSend } from "react-icons/fi"
 import { useCallback, useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { api } from "~/utils/api"
-import { canUserWriteMessage } from "~/lib/user"
+import { canUserWriteMessage, hasUserServerOpenAiAccess } from "~/lib/user"
 import classNames from "classnames"
 import {
   NO_COURSE_LECTURE_SELECTED,
@@ -19,7 +19,12 @@ import {
   createClientOnlySystemMessage,
 } from "~/constants/messages"
 import { generateBasePrompt } from "~/server/lib/generateBasePrompt"
-import { queryTutor } from "~/server/lib/openai"
+import {
+  OpenAIWrapper,
+  getOpenAIConfig,
+  getOpenAIWrapper,
+  queryTutor,
+} from "~/lib/openai"
 
 interface Props {
   messages: ChatMessage[]
@@ -31,6 +36,7 @@ export default function Chat({ messages, setMessages }: Props) {
   const [initializeRunTried, setInitializeRunTried] = useState(false)
   const [localAnswerIsLoading, setLocalAnswerIsLoading] = useState(false)
   const [isReadyToStart, setIsReadyToStart] = useState(false)
+  const [openAiWrapper, setOpenAiWrapper] = useState<OpenAIWrapper>()
 
   const [userData] = useRecoilState(userState)
   const [settings] = useRecoilState(settingsState)
@@ -40,16 +46,29 @@ export default function Chat({ messages, setMessages }: Props) {
   const resolveAnswerMutation = api.chat.resolveAnswer.useMutation()
 
   const canSendMessages = canUserWriteMessage(userData, settings)
+  const hasServerOpenAiAccess = hasUserServerOpenAiAccess(userData)
 
   const chatLoading = resolveAnswerMutation.isLoading || localAnswerIsLoading
 
+  useEffect(() => {
+    const openAiWrapper = getOpenAIWrapper(
+      getOpenAIConfig(settings.openAiAccessKey)
+    )
+
+    setOpenAiWrapper(openAiWrapper)
+  }, [settings.openAiAccessKey])
+
   const fetchMessages = useCallback(
     async (messages: ChatMessage[]) => {
-      if (canSendMessages) {
+      if (hasServerOpenAiAccess) {
         resolveAnswerMutation.mutate({ messages })
       } else {
+        if (!openAiWrapper) {
+          return
+        }
+
         setLocalAnswerIsLoading(true)
-        const responseMessage = await queryTutor(messages)
+        const responseMessage = await queryTutor(openAiWrapper, messages)
         setLocalAnswerIsLoading(false)
         setMessages([...messages, responseMessage])
       }
@@ -59,6 +78,7 @@ export default function Chat({ messages, setMessages }: Props) {
       canSendMessages,
       setLocalAnswerIsLoading,
       setMessages,
+      openAiWrapper,
     ]
   )
 

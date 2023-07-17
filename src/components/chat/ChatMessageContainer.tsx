@@ -49,8 +49,7 @@ export default function ChatMessageContainer({
           {!isSystem && <ChatUserAvatar />}
           <div className="flex gap-4">
             <div className="flex flex-col items-start gap-2">
-              {message.error.length > 0 &&
-                (debug ? message.error : message.text)}
+              {message.error.length > 0 && message.text}
               {message.error.length === 0 &&
                 messageComponents.map((msg, idx) => (
                   <div key={`msgcomponent-${idx}`}>

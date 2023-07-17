@@ -8,16 +8,19 @@ import { OPENAI_MODEL_NAME } from "./params"
 import { ChatMessage } from "~/state"
 import protect from "await-protect"
 import { uuidv4 } from "~/constants/reexports"
+import { AxiosError } from "axios"
 
-const openaiWrapper = getOpenAIWrapper()
+export const defaultOpenAIWrapper = getOpenAIWrapper(getOpenAIConfig(process.env.OPENAI_API_KEY))
+export type OpenAIWrapper = typeof defaultOpenAIWrapper
 
-export function getOpenAIConfig() {
+export function getOpenAIConfig(apiKey?: string) {
   return new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey,
   })
 }
-export function getOpenAIWrapper() {
-  return new OpenAIApi(getOpenAIConfig())
+
+export function getOpenAIWrapper(config: Configuration) {
+  return new OpenAIApi(config)
 }
 
 export function createQueryMessage(
@@ -28,6 +31,7 @@ export function createQueryMessage(
 }
 
 export async function queryTutor(
+  openaiWrapper: OpenAIWrapper,
   messages: ChatMessage[]
 ): Promise<ChatMessage> {
   const filteredMessages = messages
@@ -47,6 +51,21 @@ export async function queryTutor(
   )
 
   if (err) {
+    const axiosErr = err as AxiosError
+
+    const statusCode = axiosErr?.response?.status ?? -1
+    if (statusCode === 401) {
+      return {
+        id: uuidv4(),
+        text: "Unable to perform authorization with the ChatGPT API. Is the OpenAI access key correct?",
+        role: "system",
+        addToPrompt: false,
+        showInUi: true,
+        error: err.message,
+        type: "error",
+      }
+    }
+
     return {
       id: uuidv4(),
       text: "An error occured while querying the ChatGPT API.",
