@@ -64,6 +64,16 @@ export async function queryTutor(
         error: err.message,
         type: "error",
       }
+    } else if (statusCode === 429) {
+      return {
+        id: uuidv4(),
+        text: "You have hit the rate limit of the ChatGPT API. Please wait a bit.",
+        role: "system",
+        addToPrompt: false,
+        showInUi: true,
+        error: err.message,
+        type: "error",
+      }
     }
 
     return {
